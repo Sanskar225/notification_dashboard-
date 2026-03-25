@@ -1,7 +1,9 @@
 /**
  * Connection Manager
- * Advanced client tracking with detailed statistics
+ * Enhanced with connection logs and default room support
  */
+
+const logger = require('./logger');
 
 class ConnectionManager {
   constructor() {
@@ -20,12 +22,13 @@ class ConnectionManager {
     const client = {
       userId,
       socketId: socket.id,
+      socket: socket,
       connectedAt: new Date(),
       lastPing: new Date(),
       lastActivity: new Date(),
       ip: socket.handshake.address,
       userAgent: socket.handshake.headers['user-agent'],
-      rooms: new Set(),
+      rooms: new Set(['general']), // ✅ Add to default room
       reconnectAttempts: 0
     };
     
@@ -39,6 +42,16 @@ class ConnectionManager {
     
     this.recordHistoryPoint();
     
+    // ✅ Enhanced connection log with structured format
+    logger.info(`🔌 User connected: ${userId}`, {
+      userId,
+      socketId: socket.id,
+      ip: socket.handshake.address,
+      userAgent: socket.handshake.headers['user-agent'],
+      activeClients: this.clients.size,
+      timestamp: new Date().toISOString()
+    });
+    
     return client;
   }
   
@@ -46,6 +59,18 @@ class ConnectionManager {
     const client = this.clients.get(socketId);
     
     if (client) {
+      // ✅ Enhanced disconnection log
+      logger.info(`❌ User disconnected: ${client.userId}`, {
+        userId: client.userId,
+        socketId: client.socketId,
+        connectedDuration: Math.floor((Date.now() - client.connectedAt.getTime()) / 1000),
+        activeClients: this.clients.size - 1,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (client.socket) {
+        delete client.socket;
+      }
       this.clients.delete(socketId);
       this.userIdMap.delete(client.userId);
       this.stats.totalDisconnections++;
@@ -53,6 +78,7 @@ class ConnectionManager {
       return client;
     }
     
+    logger.warn(`⚠️ Attempted to remove non-existent client: ${socketId}`);
     return null;
   }
   
@@ -68,9 +94,11 @@ class ConnectionManager {
   getAllClients() {
     return Array.from(this.clients.values()).map(client => ({
       userId: client.userId,
+      socketId: client.socketId,
       connectedAt: client.connectedAt,
       lastPing: client.lastPing,
-      ip: client.ip
+      ip: client.ip,
+      rooms: Array.from(client.rooms)
     }));
   }
   
@@ -109,7 +137,6 @@ class ConnectionManager {
       totalConnections: this.stats.totalConnections
     });
     
-    // Keep last 100 records
     if (this.stats.connectionHistory.length > 100) {
       this.stats.connectionHistory.shift();
     }
@@ -132,6 +159,10 @@ class ConnectionManager {
       }
       this.removeClient(socketId);
     });
+    
+    if (toRemove.length > 0) {
+      logger.info(`🧹 Cleaned up ${toRemove.length} idle connections`);
+    }
     
     return toRemove.length;
   }
