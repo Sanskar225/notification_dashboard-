@@ -1,0 +1,33 @@
+{
+  "name": "realtime-notification-backend",
+  "version": "2.0.0",
+  "description": "Advanced real-time notification system with WebSockets - Broadcast, Targeted, Group, Scheduled notifications",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "prod": "NODE_ENV=production node src/index.js"
+  },
+  "keywords": [
+    "websockets",
+    "socketio",
+    "realtime",
+    "notifications",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
