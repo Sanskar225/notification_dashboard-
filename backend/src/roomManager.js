@@ -1,36 +1,62 @@
 /**
  * Room Manager
- * Handles group-based notifications and room management
+ * Enhanced with default room and room user count broadcasts
  */
 
 const { v4: uuidv4 } = require('uuid');
 const logger = require('./logger');
+const { sanitizeMessage } = require('./utils');
 
 class RoomManager {
   constructor() {
-    this.rooms = new Map(); // roomId -> room object
+    this.rooms = new Map();
+    this.initializeDefaultRoom();
+  }
+  
+  // ✅ Initialize default "general" room
+  initializeDefaultRoom() {
+    const generalRoom = {
+      id: 'general',
+      name: 'General',
+      creator: 'system',
+      createdAt: new Date(),
+      members: new Map(),
+      isActive: true,
+      isDefault: true
+    };
+    
+    this.rooms.set('general', generalRoom);
+    logger.info('🏠 Default room "general" created');
   }
   
   createRoom(name, creatorId) {
+    const sanitizedName = sanitizeMessage(name).substring(0, 50);
+    
+    if (!sanitizedName) {
+      throw new Error('Room name is required');
+    }
+    
     const roomId = uuidv4().substr(0, 8);
     const room = {
       id: roomId,
-      name,
+      name: sanitizedName,
       creator: creatorId,
       createdAt: new Date(),
-      members: new Map(), // socketId -> { userId, joinedAt }
-      isActive: true
+      members: new Map(),
+      isActive: true,
+      isDefault: false
     };
     
     this.rooms.set(roomId, room);
-    logger.info(`Room created: ${name} (${roomId}) by ${creatorId}`);
+    logger.info(`🏠 Room created: ${sanitizedName} (${roomId}) by ${creatorId}`);
     return roomId;
   }
   
-  addToRoom(roomId, socketId, userId) {
+  addToRoom(roomId, socketId, userId, io = null) {
     const room = this.rooms.get(roomId);
     
     if (!room) {
+      logger.warn(`⚠️ Attempted to join non-existent room: ${roomId} by user ${userId}`);
       return { success: false, error: 'Room not found' };
     }
     
@@ -39,7 +65,28 @@ class RoomManager {
         userId,
         joinedAt: new Date()
       });
-      logger.info(`User ${userId} joined room ${room.name} (${roomId})`);
+      
+      // ✅ Enhanced logging
+      logger.info(`👥 User joined room: ${userId} -> ${room.name} (${roomId})`, {
+        userId,
+        roomId,
+        roomName: room.name,
+        memberCount: room.members.size,
+        timestamp: new Date().toISOString()
+      });
+      
+      // ✅ Broadcast room user count update
+      if (io) {
+        io.to(roomId).emit('room-users-update', {
+          roomId,
+          roomName: room.name,
+          count: room.members.size,
+          users: Array.from(room.members.values()).map(m => m.userId),
+          action: 'join',
+          user: userId,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
     
     return { 
@@ -49,36 +96,74 @@ class RoomManager {
     };
   }
   
-  removeFromRoom(roomId, socketId) {
+  removeFromRoom(roomId, socketId, io = null) {
     const room = this.rooms.get(roomId);
     
-    if (room && room.members.has(socketId)) {
+    if (!room) {
+      return { success: false, error: 'Room not found' };
+    }
+    
+    if (room.members.has(socketId)) {
       const member = room.members.get(socketId);
       room.members.delete(socketId);
-      logger.info(`User ${member.userId} left room ${room.name} (${roomId})`);
       
-      // Delete room if empty
-      if (room.members.size === 0) {
+      // ✅ Enhanced logging
+      logger.info(`👥 User left room: ${member.userId} -> ${room.name} (${roomId})`, {
+        userId: member.userId,
+        roomId,
+        roomName: room.name,
+        remainingMembers: room.members.size,
+        timestamp: new Date().toISOString()
+      });
+      
+      // ✅ Broadcast room user count update
+      if (io) {
+        io.to(roomId).emit('room-users-update', {
+          roomId,
+          roomName: room.name,
+          count: room.members.size,
+          users: Array.from(room.members.values()).map(m => m.userId),
+          action: 'leave',
+          user: member.userId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Delete room if empty and not default
+      if (room.members.size === 0 && !room.isDefault) {
         this.rooms.delete(roomId);
-        logger.info(`Room ${room.name} (${roomId}) deleted (empty)`);
+        logger.info(`🏠 Room deleted: ${room.name} (${roomId}) - empty`);
       }
       
       return { success: true, remainingMembers: room.members.size };
     }
     
-    return { success: false };
+    return { success: false, error: 'User not in room' };
   }
   
-  removeClientFromAllRooms(socketId) {
+  removeClientFromAllRooms(socketId, io = null) {
     for (const [roomId, room] of this.rooms.entries()) {
       if (room.members.has(socketId)) {
+        const member = room.members.get(socketId);
         room.members.delete(socketId);
-        logger.debug(`Removed client ${socketId} from room ${room.name}`);
         
-        // Delete empty rooms
-        if (room.members.size === 0) {
+        // ✅ Broadcast room user count update on disconnect
+        if (io && !room.isDefault) {
+          io.to(roomId).emit('room-users-update', {
+            roomId,
+            roomName: room.name,
+            count: room.members.size,
+            users: Array.from(room.members.values()).map(m => m.userId),
+            action: 'disconnect',
+            user: member.userId,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        // Delete non-default empty rooms
+        if (room.members.size === 0 && !room.isDefault) {
           this.rooms.delete(roomId);
-          logger.info(`Room ${room.name} (${roomId}) deleted (empty after client removal)`);
+          logger.info(`🏠 Room deleted: ${room.name} (${roomId}) - empty after client removal`);
         }
       }
     }
@@ -96,18 +181,27 @@ class RoomManager {
   }
   
   getAllRooms() {
+    // ✅ Enhanced room list with member counts
     return Array.from(this.rooms.values()).map(room => ({
       id: room.id,
       name: room.name,
       creator: room.creator,
       memberCount: room.members.size,
       createdAt: room.createdAt,
+      isDefault: room.isDefault || false,
       members: Array.from(room.members.values()).map(m => m.userId)
     }));
   }
   
   getRoom(roomId) {
-    return this.rooms.get(roomId);
+    if (!roomId || typeof roomId !== 'string') {
+      return null;
+    }
+    return this.rooms.get(roomId) || null;
+  }
+  
+  roomExists(roomId) {
+    return this.rooms.has(roomId);
   }
   
   getActiveRoomCount() {
@@ -122,6 +216,11 @@ class RoomManager {
       if (member.userId === userId) return true;
     }
     return false;
+  }
+  
+  getRoomUserCount(roomId) {
+    const room = this.rooms.get(roomId);
+    return room ? room.members.size : 0;
   }
 }
 
