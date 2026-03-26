@@ -125,3 +125,93 @@ npm run dev
 cd ../frontend
 npm i
 npm run dev
+
+🏗 Architecture
+text
+┌─────────────────────────────────────────────────────────────────┐
+│                      Client (React App)                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
+│  │Dashboard │ │SendPanel │ │Feed      │ │RoomsPanel│          │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
+│         ↓           ↓           ↓           ↓                  │
+│  ┌──────────────────────────────────────────────────┐          │
+│  │           useSocket.js (Socket.IO Client)        │          │
+│  └──────────────────────────────────────────────────┘          │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │ WebSocket (ws://)
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Socket.IO Server                           │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                    Socket Handler                         │  │
+│  │  • Connection management  • Room management              │  │
+│  │  • Event routing          • Error handling               │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+        ┌─────────────────┼─────────────────┬───────────────────┐
+        ▼                 ▼                 ▼                   ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ Connection   │  │ Notification │  │ Room         │  │   Logger     │
+│ Manager      │  │ Service      │  │ Manager      │  │              │
+└──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
+🔌 Method Choice: WebSockets vs SSE
+Why WebSockets (Socket.IO) Over Server-Sent Events (SSE)
+Aspect	WebSockets (Socket.IO)	Server-Sent Events (SSE)
+Direction	Bidirectional (client ↔ server)	Unidirectional (server → client only)
+Protocol	ws:// / wss://	HTTP
+Reconnection	✅ Built-in with exponential backoff	❌ Manual implementation needed
+Rooms/Groups	✅ Native support	❌ Not supported
+Message Types	Text, binary, custom events	Text only
+Fallback	✅ Long-polling when WebSocket blocked	❌ No fallback
+Use Cases	Chat, notifications, live dashboards	News feeds, stock tickers
+Key Reasons for WebSocket Choice
+Bidirectional Communication Required - Users need to send notifications, not just receive
+
+Room-Based Pub/Sub - Group notifications require native room support
+
+Built-in Reconnection - Critical for production reliability
+
+Event-Based Architecture - Clean, organized event handling
+
+Fallback Transports - Works even when WebSocket is blocked
+
+🔄 Real-Time Communication Flow
+Connection Lifecycle
+text
+1. Client connects via Socket.IO
+   ↓
+2. Server generates unique USER_id
+   ↓
+3. Client auto-joins "general" room
+   ↓
+4. Server sends 'welcome' event
+   ↓
+5. Server broadcasts 'clients-update' to all users
+Auto-Notification Flow (Every 10 Seconds)
+text
+Timer triggers every 10 seconds
+   ↓
+Server checks active clients
+   ↓
+If clients > 0:
+   ├─ Select random message from weighted pool
+   ├─ Create notification with metadata
+   ├─ Broadcast via io.emit('notification')
+   ├─ Log: "⏱ AUTO TRIGGER: timestamp"
+   └─ All clients receive and show toast
+Manual Notification Flow
+text
+User clicks "Send" button
+   ↓
+Frontend emits appropriate event
+   ↓
+Server validates and sanitizes message
+   ↓
+Server creates notification with metadata
+   ↓
+Server delivers via appropriate method
+   ↓
+Target clients receive 'notification' event
+   ↓
+Frontend shows toast and adds to history
