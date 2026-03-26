@@ -1,5 +1,5 @@
 # ⚡ NexusPulse — Real-Time Notification System
-
+![alt text](image.png)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 [![Socket.io](https://img.shields.io/badge/Socket.io-4.x-black.svg)](https://socket.io/)
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
