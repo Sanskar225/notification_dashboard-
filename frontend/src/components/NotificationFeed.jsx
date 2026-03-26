@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Panel from './Panel'
 import { TYPE_ICONS, TYPE_COLORS } from '../utils'
 
@@ -73,31 +73,92 @@ function hexToRgb(hex) {
 
 export default function NotificationFeed({ notifications, onClear }) {
   const [filter, setFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter])
 
   const filtered = filter === 'all'
     ? notifications
     : notifications.filter(n => n.type === filter)
 
+  // Pagination logic
+  const totalItems = filtered.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentItems = filtered.slice(startIndex, endIndex)
+
   const visibleFilters = ['all','info','success','warning','error','broadcast']
+
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+  }
+
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisible = 5
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+    let end = Math.min(totalPages, start + maxVisible - 1)
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+    return pages
+  }
 
   return (
     <Panel
       title="Live Feed"
       icon="🔔"
       headerRight={
-        <button
-          onClick={onClear}
-          style={{
-            padding: '5px 12px', borderRadius: 7,
-            border: '1px solid var(--border)', background: 'var(--surface)',
-            color: 'var(--text-dim)', fontFamily: 'var(--font-mono)',
-            fontSize: '0.68rem', cursor: 'pointer', transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--text-dim)' }}
-        >
-          Clear
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Items per page selector */}
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value))
+              setCurrentPage(1)
+            }}
+            style={{
+              padding: '5px 8px',
+              borderRadius: 7,
+              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              color: 'var(--text-dim)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.68rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+            <option value={50}>50 / page</option>
+          </select>
+          
+          <button
+            onClick={onClear}
+            style={{
+              padding: '5px 12px', borderRadius: 7,
+              border: '1px solid var(--border)', background: 'var(--surface)',
+              color: 'var(--text-dim)', fontFamily: 'var(--font-mono)',
+              fontSize: '0.68rem', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--text-dim)' }}
+          >
+            Clear
+          </button>
+        </div>
       }
       style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
     >
@@ -123,13 +184,24 @@ export default function NotificationFeed({ notifications, onClear }) {
             }}
           >
             {f}
+            {f !== 'all' && (
+              <span style={{
+                marginLeft: 6,
+                padding: '1px 4px',
+                borderRadius: 4,
+                background: 'rgba(255,255,255,0.1)',
+                fontSize: '0.6rem',
+              }}>
+                {notifications.filter(n => n.type === f).length}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* scrollable feed */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {filtered.length === 0 ? (
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 300 }}>
+        {currentItems.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
             <div style={{ fontSize: '3rem', marginBottom: 12, opacity: 0.35 }}>📭</div>
             <div style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
@@ -138,9 +210,141 @@ export default function NotificationFeed({ notifications, onClear }) {
             </div>
           </div>
         ) : (
-          filtered.map((n, i) => <NotifItem key={n.id || i} notif={n} />)
+          <>
+            {currentItems.map((n, i) => <NotifItem key={n.id || i} notif={n} />)}
+            
+            {/* Pagination info */}
+            <div style={{
+              marginTop: 16,
+              padding: '12px 0',
+              textAlign: 'center',
+              fontSize: '0.7rem',
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-mono)',
+              borderTop: '1px solid var(--border)',
+            }}>
+              Showing {startIndex + 1} - {Math.min(endIndex, totalItems)} of {totalItems} notifications
+            </div>
+          </>
         )}
       </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && currentItems.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          padding: '12px 0 0 0',
+          borderTop: '1px solid var(--border)',
+          flexShrink: 0,
+          marginTop: 8,
+        }}>
+          <button
+            onClick={() => goToPage(1)}
+            disabled={currentPage === 1}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--border)',
+              background: currentPage === 1 ? 'rgba(255,255,255,0.03)' : 'var(--surface)',
+              color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-dim)',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              fontSize: '0.7rem',
+              transition: 'all 0.15s',
+              opacity: currentPage === 1 ? 0.5 : 1,
+            }}
+          >
+            «
+          </button>
+          
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--border)',
+              background: currentPage === 1 ? 'rgba(255,255,255,0.03)' : 'var(--surface)',
+              color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-dim)',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              fontSize: '0.7rem',
+              transition: 'all 0.15s',
+              opacity: currentPage === 1 ? 0.5 : 1,
+            }}
+          >
+            ‹
+          </button>
+
+          {getPageNumbers().map(page => (
+            <button
+              key={page}
+              onClick={() => goToPage(page)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: '1px solid var(--border)',
+                background: currentPage === page ? 'rgba(200,181,96,0.15)' : 'var(--surface)',
+                borderColor: currentPage === page ? 'rgba(200,181,96,0.4)' : 'var(--border)',
+                color: currentPage === page ? 'var(--accent)' : 'var(--text-dim)',
+                cursor: 'pointer',
+                fontSize: '0.7rem',
+                fontWeight: currentPage === page ? 600 : 400,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                if (currentPage !== page) {
+                  e.currentTarget.style.background = 'var(--surface-hover)'
+                }
+              }}
+              onMouseLeave={e => {
+                if (currentPage !== page) {
+                  e.currentTarget.style.background = 'var(--surface)'
+                }
+              }}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--border)',
+              background: currentPage === totalPages ? 'rgba(255,255,255,0.03)' : 'var(--surface)',
+              color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-dim)',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              fontSize: '0.7rem',
+              transition: 'all 0.15s',
+              opacity: currentPage === totalPages ? 0.5 : 1,
+            }}
+          >
+            ›
+          </button>
+          
+          <button
+            onClick={() => goToPage(totalPages)}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--border)',
+              background: currentPage === totalPages ? 'rgba(255,255,255,0.03)' : 'var(--surface)',
+              color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-dim)',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              fontSize: '0.7rem',
+              transition: 'all 0.15s',
+              opacity: currentPage === totalPages ? 0.5 : 1,
+            }}
+          >
+            »
+          </button>
+        </div>
+      )}
     </Panel>
   )
 }
