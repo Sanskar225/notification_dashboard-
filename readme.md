@@ -417,10 +417,11 @@ Add full type safety across both frontend and backend for better IDE support, re
 ## 📄 License
 This project is open source and available under the MIT License.
 
-Contact
-Email: sanskarsinha225@example.com
-LinkedIn: linkedin.com/in/sanskar-sinha-185a36326
-GitHub: github.com/Sanskar225
-Instagram: @__sanskar225
+Contact## 📬 Contact
+
+- 📧 Email: [sanskarsinha225@example.com](mailto:sanskarsinha225@example.com)
+- 💼 LinkedIn: [linkedin.com/in/sanskar-sinha-185a36326](https://linkedin.com/in/sanskar-sinha-185a36326)
+- 💻 GitHub: [github.com/Sanskar225](https://github.com/Sanskar225)
+- 📸 Instagram: [@__sanskar225](https://instagram.com/__sanskar225)
 
 Made with dedication by Sanskar Sinha
