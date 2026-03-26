@@ -15,7 +15,7 @@ function formatDate(date) {
 
 function getTimeAgo(date) {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-  
+
   const intervals = {
     year: 31536000,
     month: 2592000,
@@ -24,14 +24,14 @@ function getTimeAgo(date) {
     hour: 3600,
     minute: 60
   };
-  
+
   for (const [unit, secondsInUnit] of Object.entries(intervals)) {
     const interval = Math.floor(seconds / secondsInUnit);
     if (interval >= 1) {
       return `${interval} ${unit}${interval === 1 ? '' : 's'} ago`;
     }
   }
-  
+
   return 'just now';
 }
 
@@ -41,9 +41,24 @@ function sanitizeMessage(message) {
     .substring(0, 500);
 }
 
+// ✅ ADD THIS
+function truncateMessage(message, maxLength = 200) {
+  if (!message) return '';
+  return message.length > maxLength
+    ? message.slice(0, maxLength)
+    : message;
+}
+
+// ✅ ADD THIS
+function isValidMessage(message) {
+  return typeof message === 'string' && message.trim().length > 0;
+}
+
 module.exports = {
   generateId,
   formatDate,
   getTimeAgo,
-  sanitizeMessage
+  sanitizeMessage,
+  truncateMessage,     // ✅ FIX
+  isValidMessage       // ✅ FIX
 };
