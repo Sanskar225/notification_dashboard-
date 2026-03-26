@@ -64,17 +64,17 @@ class NotificationService {
   }
   
   generateRandomNotification() {
-    const totalWeight = this.messagePool.reduce((sum, item) => sum + item.weight, 0);
-    let random = Math.random() * totalWeight;
-    
-    let selected = this.messagePool[0];
-    for (const item of this.messagePool) {
-      if (random < item.weight) {
-        selected = item;
-        break;
-      }
-      random -= item.weight;
+  const totalWeight = this.messagePool.reduce((sum, item) => sum + item.weight, 0);
+  let random = Math.random() * totalWeight;
+  
+  let selected = this.messagePool[0];
+  for (const item of this.messagePool) {
+    random -= item.weight;
+    if (random < 0) {
+      selected = item;
+      break;
     }
+  }
     
     return this.createNotification(
       selected.message,
