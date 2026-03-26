@@ -27,7 +27,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js v14 or higher
+- Node.js v18 or higher
 - npm v6 or higher
 
 ### 1. Clone the Repository
