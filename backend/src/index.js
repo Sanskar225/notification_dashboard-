@@ -1,7 +1,3 @@
-/**
- * Main Application Entry Point
- * Advanced real-time notification system
- */
 
 const dotenv = require('dotenv');
 const path = require('path');

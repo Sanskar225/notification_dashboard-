@@ -1,7 +1,3 @@
-/**
- * Notification Service
- * Enhanced with metadata and clear scheduler logging
- */
 
 const { v4: uuidv4 } = require('uuid');
 const logger = require('./logger');

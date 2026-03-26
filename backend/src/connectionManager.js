@@ -1,8 +1,3 @@
-/**
- * Connection Manager
- * Enhanced with connection logs and default room support
- */
-
 const logger = require('./logger');
 
 class ConnectionManager {

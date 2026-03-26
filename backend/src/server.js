@@ -1,7 +1,3 @@
-/**
- * Server Configuration
- * Sets up Express, Socket.IO, and all services
- */
 
 const express = require('express');
 const http = require('http');

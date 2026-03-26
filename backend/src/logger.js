@@ -1,6 +1,4 @@
-/**
- * Simple Logger with colors and file output
- */
+
 
 const fs = require('fs');
 const path = require('path');

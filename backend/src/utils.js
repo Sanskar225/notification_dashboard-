@@ -1,6 +1,3 @@
-/**
- * Utility functions
- */
 
 const crypto = require('crypto');
 

@@ -1,7 +1,3 @@
-/**
- * Socket.IO Event Handlers
- * Updated with default room support and enhanced logging
- */
 
 const connectionManager = require('./connectionManager');
 const notificationService = require('./notificationService');

@@ -1,7 +1,4 @@
-/**
- * Room Manager
- * Enhanced with default room and room user count broadcasts
- */
+
 
 const { v4: uuidv4 } = require('uuid');
 const logger = require('./logger');

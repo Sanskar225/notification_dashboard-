@@ -1,8 +1,3 @@
-/**
- * API Routes
- * REST endpoints for monitoring and control
- * Enhanced with notification history, detailed stats, and room member counts
- */
 
 const express = require('express');
 const connectionManager = require('./connectionManager');
