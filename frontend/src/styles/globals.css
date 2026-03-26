@@ -1,0 +1,79 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: rgba(255,255,255,0.03);
+  --surface-hover: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --border-bright: rgba(255,255,255,0.16);
+  --text: #f0ede8;
+  --text-dim: rgba(240,237,232,0.45);
+  --text-muted: rgba(240,237,232,0.25);
+  --accent: #c8b560;
+  --accent2: #e07b3a;
+  --accent-glow: rgba(200,181,96,0.15);
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --pink: #f472b6;
+  --teal: #2dd4bf;
+  --yellow: #fbbf24;
+  --gray: #9ca3af;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* scrollbar */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+*::-webkit-scrollbar { width: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* type color classes */
+.type-info    { --nc: var(--blue);   --nb: rgba(96,165,250,0.12); }
+.type-success { --nc: var(--green);  --nb: rgba(74,222,128,0.12); }
+.type-warning { --nc: var(--yellow); --nb: rgba(251,191,36,0.12); }
+.type-error   { --nc: var(--red);    --nb: rgba(248,113,113,0.12); }
+.type-broadcast { --nc: var(--purple); --nb: rgba(167,139,250,0.12); }
+.type-targeted  { --nc: var(--pink);   --nb: rgba(244,114,182,0.12); }
+.type-group     { --nc: var(--orange); --nb: rgba(251,146,60,0.12); }
+.type-scheduled { --nc: var(--gray);   --nb: rgba(156,163,175,0.12); }
+.type-event_triggered { --nc: var(--teal); --nb: rgba(45,212,191,0.12); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-14px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes flashVal {
+  0%,100% { color: var(--text); }
+  50%      { color: var(--accent); }
+}
+@keyframes pulseDot {
+  0%,100% { box-shadow: 0 0 6px var(--green); }
+  50%      { box-shadow: 0 0 14px var(--green), 0 0 4px var(--green); }
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes toastIn {
+  from { opacity:0; transform: translateX(60px) scale(0.9); }
+  to   { opacity:1; transform: translateX(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity:1; transform:translateX(0); max-height:120px; padding:14px 18px; }
+  to   { opacity:0; transform:translateX(60px); max-height:0; padding:0; margin:0; }
+}
+@keyframes toastTimer { from{transform:scaleX(1)} to{transform:scaleX(0)} }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes spin { to { transform: rotate(360deg); } }
