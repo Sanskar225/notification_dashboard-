@@ -47,8 +47,10 @@ function truncateMessage(message, maxLength = 200) {
 }
 
 // ✅ ADD THIS
-function isValidMessage(message) {
-  return typeof message === 'string' && message.trim().length > 0;
+function isValidMessage(message, maxLength = 200) {
+  if (!message || typeof message !== 'string') return false;
+  const trimmed = message.trim();
+  return trimmed.length > 0 && trimmed.length <= maxLength;
 }
 
 module.exports = {
