@@ -1,6 +1,6 @@
 # ⚡ NexusPulse — Real-Time Notification System
-![alt text](image.png) Active WebSocket connection — Client successfully connected to the backend server
-![alt text](image-1.png) Connection failure state — Client running but unable to establish connection with backend server
+![alt text](./frontend/public/image.png) Active WebSocket connection — Client successfully connected to the backend server
+![alt text](./frontend/public/image-1.png) Connection failure state — Client running but unable to establish connection with backend server
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 [![Socket.io](https://img.shields.io/badge/Socket.io-4.x-black.svg)](https://socket.io/)
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
