@@ -165,4 +165,3 @@ class ConnectionManager {
 
 module.exports = new ConnectionManager();
 
-//tested using postman and socket.io client, all functions work as expected, including connection management, room handling, and notification broadcasting. Logs are structured and provide detailed insights into client activity and system performance.
